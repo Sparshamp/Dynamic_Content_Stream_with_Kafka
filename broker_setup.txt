@@ -1,0 +1,133 @@
+ NODE 2 - KAFKA BROKER SETUP
+
+
+PURPOSE
+----------------------------------------------------
+This node acts as the central streaming pipeline 
+between the Producer and the Consumer.
+
+- All active topics live here.
+- Producers publish data here.
+- Consumers subscribe and consume data from here.
+
+Your goal as the BROKER NODE:
+1. Keep Kafka and Zookeeper running.
+2. Disable auto topic creation.
+3. Ensure dynamic topics appear when approved.
+4. Verify message routing between Producer and Consumer.
+
+
+STEP 1: INSTALL REQUIREMENTS (UBUNTU)
+----------------------------------------------------
+1. Install Java (required for Kafka)
+   sudo apt update
+   sudo apt install openjdk-11-jdk -y
+   java -version
+
+2. Download and Extract Kafka
+   wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+   tar -xzf kafka_2.13-3.7.0.tgz
+   cd kafka_2.13-3.7.0
+
+
+STEP 2: CONFIGURE KAFKA
+----------------------------------------------------
+Open the configuration file:
+   nano config/server.properties
+
+Make sure the following lines exist or are modified:
+
+   broker.id=1
+   auto.create.topics.enable=false
+   listeners=PLAINTEXT://localhost:9092
+   zookeeper.connect=localhost:2181
+   log.dirs=/tmp/kafka-logs
+
+Save and exit:
+   Ctrl + O → Enter → Ctrl + X
+
+Note:
+Disabling auto.create.topics.enable ensures that
+only approved topics (via the Admin Node) are created.
+
+
+STEP 3: START SERVICES
+----------------------------------------------------
+Open two separate terminals:
+
+TERMINAL 1 – Start Zookeeper
+   bin/zookeeper-server-start.sh config/zookeeper.properties
+
+TERMINAL 2 – Start Kafka Broker
+   bin/kafka-server-start.sh config/server.properties
+
+Check if both are running:
+   jps
+
+Expected output:
+   QuorumPeerMain
+   Kafka
+
+
+STEP 4: VERIFY BROKER STATUS
+----------------------------------------------------
+List all topics:
+   bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+
+At first, this will be empty.
+Once Producer and Admin nodes run, approved topics will appear here.
+
+Describe a topic:
+   bin/kafka-topics.sh --describe --topic <topic_name> --bootstrap-server localhost:9092
+
+
+OPTIONAL COMMANDS
+----------------------------------------------------
+Delete a topic:
+   bin/kafka-topics.sh --delete --topic <topic_name> --bootstrap-server localhost:9092
+
+View Kafka logs (for debugging):
+   cat logs/server.log | tail -n 50
+
+Clean logs if needed:
+   rm -rf /tmp/kafka-logs /tmp/zookeeper
+
+
+NODE 2 CHECKLIST (FOR MARKS)
+----------------------------------------------------
+[ ] Kafka and Zookeeper run without errors
+[ ] auto.create.topics.enable = false
+[ ] Dynamic topics appear only after approval
+[ ] Messages flow correctly Producer → Broker → Consumer
+[ ] Broker remains stable during runtime
+
+
+NOTES
+----------------------------------------------------
+- Keep both Zookeeper and Kafka terminals open.
+- If you close them, Producer and Consumer will disconnect.
+- Logs are stored in /tmp/kafka-logs and /tmp/zookeeper.
+- You can clean them between test runs using:
+    rm -rf /tmp/kafka-logs /tmp/zookeeper
+
+
+BONUS TIP (FOR DEMO)
+----------------------------------------------------
+To auto-refresh and view live topics:
+   watch -n 5 "bin/kafka-topics.sh --list --bootstrap-server localhost:9092"
+
+This command refreshes every 5 seconds and shows new topics
+as they are dynamically created by the Producer.
+
+
+CONCLUSION
+----------------------------------------------------
+Your Kafka Broker node is now ready.
+
+Make sure to:
+- Start Zookeeper
+- Start Kafka
+- Keep both running while the Producer, Consumer,
+  and Admin nodes are active.
+
+This ensures smooth end-to-end data flow.
